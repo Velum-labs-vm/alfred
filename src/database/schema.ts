@@ -1,7 +1,7 @@
 import {appSchema, tableSchema} from '@nozbe/watermelondb';
 
 export default appSchema({
-  version: 6,
+  version: 7,
   tables: [
     tableSchema({
       name: 'chat_sessions',
@@ -126,6 +126,61 @@ export default appSchema({
         {name: 'generation_settings', type: 'string', isOptional: true}, // JSON stringified
         {name: 'created_at', type: 'number'},
         {name: 'updated_at', type: 'number'},
+      ],
+    }),
+
+    tableSchema({
+      name: 'conversations',
+      columns: [
+        {name: 'transcript', type: 'string'},
+        {name: 'response', type: 'string'},
+        {name: 'mode', type: 'string'},
+        {name: 'timestamp', type: 'number', isIndexed: true},
+      ],
+    }),
+    tableSchema({
+      name: 'preferences',
+      columns: [
+        {name: 'key', type: 'string', isIndexed: true},
+        {name: 'value', type: 'string'},
+        {name: 'updated_at', type: 'number'},
+      ],
+    }),
+    tableSchema({
+      name: 'audit_log',
+      columns: [
+        {name: 'endpoint', type: 'string'},
+        {name: 'query_length', type: 'number'},
+        {name: 'context_fields_sent', type: 'string'},
+        {name: 'response_length', type: 'number'},
+        {name: 'timestamp', type: 'number', isIndexed: true},
+      ],
+    }),
+    tableSchema({
+      name: 'tasks',
+      columns: [
+        {name: 'title', type: 'string'},
+        {name: 'status', type: 'string'},
+        {name: 'created_at', type: 'number'},
+        {name: 'due_at', type: 'number', isOptional: true},
+      ],
+    }),
+    tableSchema({
+      name: 'reminders',
+      columns: [
+        {name: 'title', type: 'string'},
+        {name: 'remind_at', type: 'number'},
+        {name: 'status', type: 'string'},
+        {name: 'created_at', type: 'number'},
+      ],
+    }),
+    tableSchema({
+      name: 'command_timeline',
+      columns: [
+        {name: 'stage', type: 'string'},
+        {name: 'detail', type: 'string'},
+        {name: 'success', type: 'boolean'},
+        {name: 'timestamp', type: 'number', isIndexed: true},
       ],
     }),
   ],

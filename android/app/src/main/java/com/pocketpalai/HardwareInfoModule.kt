@@ -1,8 +1,8 @@
-package com.pocketpal
+package com.jarviscore.app
 
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
-import com.pocketpal.specs.NativeHardwareInfoSpec
+import com.jarviscore.app.specs.NativeHardwareInfoSpec
 import android.os.Build
 import android.os.Debug
 import java.io.File

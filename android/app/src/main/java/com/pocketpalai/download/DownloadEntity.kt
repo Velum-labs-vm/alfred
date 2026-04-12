@@ -1,4 +1,4 @@
-package com.pocketpal.download
+package com.jarviscore.app.download
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

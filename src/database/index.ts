@@ -11,6 +11,12 @@ import {
   UserLibrary,
   SyncStatus,
   LocalPal,
+  AlfredConversation,
+  AlfredPreference,
+  AlfredAuditLog,
+  AlfredTask,
+  AlfredReminder,
+  AlfredCommandTimeline,
 } from './models';
 
 const adapter = new SQLiteAdapter({
@@ -34,6 +40,12 @@ export const database = new Database({
     UserLibrary,
     SyncStatus,
     LocalPal,
+    AlfredConversation,
+    AlfredPreference,
+    AlfredAuditLog,
+    AlfredTask,
+    AlfredReminder,
+    AlfredCommandTimeline,
   ],
 });
 
@@ -46,4 +58,10 @@ export {
   UserLibrary,
   SyncStatus,
   LocalPal,
+  AlfredConversation,
+  AlfredPreference,
+  AlfredAuditLog,
+  AlfredTask,
+  AlfredReminder,
+  AlfredCommandTimeline,
 };

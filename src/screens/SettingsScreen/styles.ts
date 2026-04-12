@@ -104,4 +104,10 @@ export const createStyles = (theme: Theme) =>
     segmentedButtons: {
       marginVertical: 8,
     },
+    settingItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 8,
+    },
   });

@@ -1,4 +1,4 @@
-package com.pocketpal.download
+package com.jarviscore.app.download
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

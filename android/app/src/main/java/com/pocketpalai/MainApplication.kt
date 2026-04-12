@@ -1,4 +1,4 @@
-package com.pocketpal
+package com.jarviscore.app
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -11,10 +11,11 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
-import com.pocketpal.KeepAwakePackage
-import com.pocketpal.HardwareInfoPackage
-import com.pocketpal.StorefrontPackage
-import com.pocketpal.download.DownloadPackage
+import com.jarviscore.app.KeepAwakePackage
+import com.jarviscore.app.HardwareInfoPackage
+import com.jarviscore.app.StorefrontPackage
+import com.jarviscore.app.download.DownloadPackage
+import com.jarviscore.app.AlfredDevicePackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -28,6 +29,7 @@ class MainApplication : Application(), ReactApplication {
               add(HardwareInfoPackage())
               add(StorefrontPackage())
               add(DownloadPackage())
+              add(AlfredDevicePackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

@@ -7,3 +7,5 @@ export * from './SettingsScreen';
 
 // Dev tools screen. Only available in debug mode.
 export * from './DevToolsScreen';
+
+export * from './AlfredHomeScreen';

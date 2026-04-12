@@ -130,5 +130,65 @@ export default schemaMigrations({
         }),
       ],
     },
+
+    {
+      toVersion: 7,
+      steps: [
+        createTable({
+          name: 'conversations',
+          columns: [
+            {name: 'transcript', type: 'string'},
+            {name: 'response', type: 'string'},
+            {name: 'mode', type: 'string'},
+            {name: 'timestamp', type: 'number', isIndexed: true},
+          ],
+        }),
+        createTable({
+          name: 'preferences',
+          columns: [
+            {name: 'key', type: 'string', isIndexed: true},
+            {name: 'value', type: 'string'},
+            {name: 'updated_at', type: 'number'},
+          ],
+        }),
+        createTable({
+          name: 'audit_log',
+          columns: [
+            {name: 'endpoint', type: 'string'},
+            {name: 'query_length', type: 'number'},
+            {name: 'context_fields_sent', type: 'string'},
+            {name: 'response_length', type: 'number'},
+            {name: 'timestamp', type: 'number', isIndexed: true},
+          ],
+        }),
+        createTable({
+          name: 'tasks',
+          columns: [
+            {name: 'title', type: 'string'},
+            {name: 'status', type: 'string'},
+            {name: 'created_at', type: 'number'},
+            {name: 'due_at', type: 'number', isOptional: true},
+          ],
+        }),
+        createTable({
+          name: 'reminders',
+          columns: [
+            {name: 'title', type: 'string'},
+            {name: 'remind_at', type: 'number'},
+            {name: 'status', type: 'string'},
+            {name: 'created_at', type: 'number'},
+          ],
+        }),
+        createTable({
+          name: 'command_timeline',
+          columns: [
+            {name: 'stage', type: 'string'},
+            {name: 'detail', type: 'string'},
+            {name: 'success', type: 'boolean'},
+            {name: 'timestamp', type: 'number', isIndexed: true},
+          ],
+        }),
+      ],
+    },
   ],
 });

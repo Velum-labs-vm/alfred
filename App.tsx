@@ -31,7 +31,7 @@ import {
   MemorySnapshotTrigger,
 } from './src/components';
 import {
-  ChatScreen,
+  AlfredHomeScreen,
   ModelsScreen,
   SettingsScreen,
   BenchmarkScreen,
@@ -90,7 +90,7 @@ const App = observer(() => {
                     drawerContent={props => <SidebarContent {...props} />}>
                     <Drawer.Screen
                       name={ROUTES.CHAT}
-                      component={gestureHandlerRootHOC(ChatScreen)}
+                      component={gestureHandlerRootHOC(AlfredHomeScreen)}
                       options={{
                         headerShown: false,
                       }}

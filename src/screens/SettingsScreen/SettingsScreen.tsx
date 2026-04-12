@@ -46,6 +46,9 @@ import {useTheme} from '../../hooks';
 import {createStyles} from './styles';
 
 import {modelStore, uiStore, hfStore} from '../../store';
+import {alfredStore} from '../../store/AlfredStore';
+import {PrivacyGuard} from '../../services/alfred';
+import {AlfredNative, MemoryStore, AutomationEngine} from '../../services/alfred';
 import {languageDisplayNames} from '../../locales';
 
 import {CacheType} from '../../utils/types';
@@ -97,6 +100,13 @@ export const SettingsScreen: React.FC = observer(() => {
     y: 0.0,
   });
   const [deviceOptions, setDeviceOptions] = useState<DeviceOption[]>([]);
+  const [auditLog, setAuditLog] = useState<any[]>([]);
+  const [overlayGranted, setOverlayGranted] = useState(false);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [recentConversations, setRecentConversations] = useState<any[]>([]);
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [recentReminders, setRecentReminders] = useState<any[]>([]);
+  const [overlayRunning, setOverlayRunning] = useState(false);
   const [currentBackend, setCurrentBackend] = useState<
     'metal' | 'opencl' | 'hexagon' | 'cpu' | 'blas'
   >(Platform.OS === 'ios' ? 'metal' : 'cpu');
@@ -111,6 +121,14 @@ export const SettingsScreen: React.FC = observer(() => {
 
   useEffect(() => {
     setContextSize(modelStore.contextInitParams.n_ctx.toString());
+
+    PrivacyGuard.getAuditLog().then(setAuditLog).catch(() => setAuditLog([]));
+    AlfredNative.hasOverlayPermission().then(setOverlayGranted).catch(() => setOverlayGranted(false));
+    AlfredNative.isOverlayRunning().then(setOverlayRunning).catch(() => setOverlayRunning(false));
+    MemoryStore.getTimeline(20).then(setTimeline).catch(() => setTimeline([]));
+    MemoryStore.getRecentConversations(20).then(setRecentConversations).catch(() => setRecentConversations([]));
+    MemoryStore.getTasks(20).then(setRecentTasks).catch(() => setRecentTasks([]));
+    MemoryStore.getReminders(20).then(setRecentReminders).catch(() => setRecentReminders([]));
 
     // Check for GPU support (Metal on iOS 18+, OpenCL on Android with Adreno + CPU features)
     const checkGpuCapabilities = async () => {
@@ -277,6 +295,148 @@ export const SettingsScreen: React.FC = observer(() => {
         <ScrollView
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled">
+
+          <Card elevation={0} style={styles.card}>
+            <Card.Title title="ALFRED Protocols" />
+            <Card.Content>
+              <List.Section>
+                <List.Subheader>Voice</List.Subheader>
+                <View style={styles.settingItemRow}>
+                  <Text variant="titleMedium">TTS responses</Text>
+                  <Switch value={alfredStore.ttsEnabled} onValueChange={v => alfredStore.setTtsEnabled(v)} />
+                </View>
+                <View style={styles.settingItemRow}>
+                  <Text variant="titleMedium">Presence mode</Text>
+                  <Text>{alfredStore.presenceMode}</Text>
+                </View>
+                <View style={styles.settingItemRow}>
+                  <Text variant="titleMedium">Wake word enabled</Text>
+                  <Switch value={alfredStore.wakeWordEnabled} onValueChange={v => { alfredStore.wakeWordEnabled = v; }} />
+                </View>
+                <TextInput
+                  label="Porcupine AccessKey"
+                  value={alfredStore.porcupineAccessKey}
+                  onChangeText={value => (alfredStore.porcupineAccessKey = value)}
+                  mode="outlined"
+                  secureTextEntry
+                />
+                <Text variant="labelSmall">
+                  Wake availability: {alfredStore.porcupineAccessKey ? 'configured' : 'tap mode active'}
+                </Text>
+                <List.Subheader>Connector Mode</List.Subheader>
+                <SegmentedButtons
+                  value={alfredStore.mode}
+                  onValueChange={value => alfredStore.setMode(value as any)}
+                  buttons={[
+                    {value: 'LOCAL ONLY', label: 'LOCAL ONLY'},
+                    {value: 'MANOR NETWORK', label: 'MANOR'},
+                    {value: 'REMOTE RELAY', label: 'RELAY'},
+                  ]}
+                />
+                <View style={styles.settingItemRow}>
+                  <Text variant="titleMedium">Remember connector mode</Text>
+                  <Switch
+                    value={alfredStore.rememberConnectorPreference}
+                    onValueChange={v => { alfredStore.rememberConnectorPreference = v; }}
+                  />
+                </View>
+                <List.Subheader>Privacy Audit</List.Subheader>
+                <Text variant="labelSmall">Recent outbound requests: {auditLog.length}</Text>
+                <Button mode="outlined" onPress={async () => {
+                  await PrivacyGuard.clearAuditLog();
+                  setAuditLog([]);
+                }}>
+                  Clear audit log
+                </Button>
+                <Button mode="outlined" onPress={async () => {
+                  await MemoryStore.clearConversations();
+                  setRecentConversations([]);
+                }}>
+                  Clear conversation history
+                </Button>
+                <List.Subheader>Overlay</List.Subheader>
+                <Text variant="labelSmall">Overlay permission: {overlayGranted ? 'granted' : 'not granted'}</Text>
+                <Text variant="labelSmall">Overlay runtime: {overlayRunning ? 'running' : 'stopped'}</Text>
+                <View style={styles.settingItemRow}>
+                  <Button mode="contained-tonal" onPress={() => AlfredNative.openOverlaySettings()}>
+                    Open overlay settings
+                  </Button>
+                  <Button mode="outlined" onPress={async () => {
+                    AlfredNative.startOverlay();
+                    const running = await AlfredNative.isOverlayRunning();
+                    setOverlayRunning(!!running);
+                  }}>
+                    Start overlay
+                  </Button>
+                  <Button mode="outlined" onPress={async () => {
+                    AlfredNative.stopOverlay();
+                    setOverlayRunning(false);
+                  }}>
+                    Stop
+                  </Button>
+                </View>
+                <List.Subheader>Automations</List.Subheader>
+                <View style={styles.settingItemRow}>
+                  <Button mode="contained-tonal" onPress={async () => AutomationEngine.scheduleDefaults()}>
+                    Schedule daily briefs
+                  </Button>
+                  <Button mode="outlined" onPress={async () => {
+                    AlfredNative.cancelDailyAutomation('morning_brief');
+                    AlfredNative.cancelDailyAutomation('evening_summary');
+                  }}>
+                    Cancel briefs
+                  </Button>
+                </View>
+                <List.Subheader>Diagnostics</List.Subheader>
+                <Text variant="labelSmall">Timeline events: {timeline.length}</Text>
+                {timeline.length === 0 && <Text variant="labelSmall">No timeline entries yet.</Text>}
+                {timeline.slice(0, 5).map((item: any, idx: number) => (
+                  <Text key={`tl-${idx}`} variant="labelSmall">• {item.stage}: {item.detail} ({new Date(item.timestamp).toLocaleTimeString()})</Text>
+                ))}
+
+                <Text variant="labelSmall">Recent conversations: {recentConversations.length}</Text>
+                {recentConversations.length === 0 && <Text variant="labelSmall">No conversations persisted yet.</Text>}
+                {recentConversations.slice(0, 5).map((item: any, idx: number) => (
+                  <Text key={`cv-${idx}`} variant="labelSmall">• {item.transcript} ({new Date(item.timestamp).toLocaleString()})</Text>
+                ))}
+
+                <Text variant="labelSmall">Recent tasks: {recentTasks.length}</Text>
+                {recentTasks.length === 0 && <Text variant="labelSmall">No tasks recorded.</Text>}
+                {recentTasks.slice(0, 5).map((item: any, idx: number) => (
+                  <View key={`tk-${idx}`} style={styles.settingItemRow}>
+                    <Text variant="labelSmall">• [{item.status}] {item.title} ({new Date(item.remindAt || item.createdAt || Date.now()).toLocaleString()})</Text>
+                    {item.status !== 'done' && (
+                      <Button compact mode="text" onPress={async () => {
+                        await MemoryStore.markTaskDone(item.id);
+                        const next = await MemoryStore.getTasks(20);
+                        setRecentTasks(next);
+                      }}>Done</Button>
+                    )}
+                  </View>
+                ))}
+
+                <Text variant="labelSmall">Recent reminders: {recentReminders.length}</Text>
+                {recentReminders.length === 0 && <Text variant="labelSmall">No reminders scheduled.</Text>}
+                {recentReminders.slice(0, 5).map((item: any, idx: number) => (
+                  <View key={`rm-${idx}`} style={styles.settingItemRow}>
+                    <Text variant="labelSmall">• [{item.status}] {item.title} ({new Date(item.remindAt || item.createdAt || Date.now()).toLocaleString()})</Text>
+                    <Button compact mode="text" onPress={async () => {
+                      await MemoryStore.snoozeReminder(item.title, 15);
+                      const next = await MemoryStore.getReminders(20);
+                      setRecentReminders(next);
+                    }}>Snooze 15m</Button>
+                  </View>
+                ))}
+
+                <Text variant="labelSmall">Recent audit entries: {auditLog.length}</Text>
+                {auditLog.length === 0 && <Text variant="labelSmall">No outbound connector requests logged.</Text>}
+                {auditLog.slice(0, 5).map((item: any, idx: number) => (
+                  <Text key={`au-${idx}`} variant="labelSmall">• {item.endpoint} ({item.query_length}) @ {new Date(item.timestamp).toLocaleString()}</Text>
+                ))}
+              </List.Section>
+            </Card.Content>
+          </Card>
+
           {/* Model Initialization Settings */}
           <Card elevation={0} style={styles.card}>
             <Card.Title title={l10n.settings.modelInitializationSettings} />

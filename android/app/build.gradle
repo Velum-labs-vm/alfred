@@ -85,9 +85,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.pocketpal"
+    namespace "com.jarviscore.app"
     defaultConfig {
-        applicationId "com.pocketpalai"
+        applicationId "com.jarviscore.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 136 

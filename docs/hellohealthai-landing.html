@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HelloHealthAI — Recover Missed Appointments Automatically</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal: #0E4B57;
+      --teal-2: #155f6d;
+      --ink: #2B2F33;
+      --muted: #66737a;
+      --bg: #f6f9fa;
+      --line: #dbe7ea;
+      --soft: #e8f2f4;
+      --accent: #3a8fa0;
+      --champagne: #F3E7D7;
+      --champagne-2: #EEDFC8;
+      --champagne-3: #D8C2A8;
+      --success: #2E8B57;
+      --success-soft: #DDF5E8;
+      --blue: #6FB6FF;
+      --blue-2: #8CCBFF;
+      --blue-soft: #EAF5FF;
+      --radius: 20px;
+      --max: 1120px;
+      --shadow: 0 18px 60px rgba(14, 75, 87, .11);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Open Sans', system-ui, sans-serif;
+      color: var(--ink);
+      line-height: 1.55;
+      background: linear-gradient(180deg, #f9fcfd 0%, #f2f7f8 100%);
+    }
+    h1, h2, h3 { font-family: 'DM Serif Display', Georgia, serif; letter-spacing: -.02em; margin: 0; line-height: 1.05; }
+    p { margin: 0; }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(calc(100% - 32px), var(--max)); margin: 0 auto; }
+    .section { padding: 88px 0; }
+    .section-alt { background: rgba(14, 75, 87, 0.035); border-top: 1px solid rgba(14, 75, 87, 0.08); border-bottom: 1px solid rgba(14, 75, 87, 0.08); }
+
+    .nav-wrap { position: sticky; top: 0; z-index: 20; background: rgba(249,252,253,.92); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(43,47,51,.08); }
+    .nav { min-height: 76px; display: flex; gap: 18px; align-items: center; justify-content: space-between; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.25rem; letter-spacing: -.02em; color: var(--teal); }
+    .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(145deg, var(--teal), var(--teal-2)); display: grid; place-items: center; box-shadow: 0 8px 18px rgba(14,75,87,.2); }
+    .brand-mark svg { width: 19px; height: 19px; fill: #fff; }
+    .brand-wordmark { display: inline-flex; align-items: center; gap: 2px; }
+    .brand-ai { color: var(--accent); text-shadow: 0 0 0 transparent; position: relative; }
+    .brand-sparkle { width: 14px; height: 14px; margin-left: 4px; color: var(--blue); opacity: .88; }
+    .brand-status { margin-left: 8px; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #2a648a; background: var(--blue-soft); border: 1px solid rgba(111,182,255,.45); border-radius: 999px; padding: 4px 8px; }
+    .nav-links { display: flex; gap: 20px; font-size: .94rem; font-weight: 700; color: var(--muted); }
+    .nav-links a:hover { color: var(--teal); }
+    .mobile-nav-toggle { display: none; border: 1px solid var(--line); background: #fff; color: var(--teal); border-radius: 10px; padding: 8px 10px; font-weight: 800; }
+
+    .hero { padding: 46px 0 78px; }
+    .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 26px; align-items: center; }
+    .eyebrow { display: inline-block; padding: 8px 12px; border-radius: 999px; background: rgba(14,75,87,.08); color: var(--teal); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; border: 1px solid rgba(14,75,87,.1); }
+    h1 { font-size: clamp(2.2rem, 5vw, 4.1rem); max-width: 12ch; margin-top: 16px; }
+    .sub { color: var(--muted); margin-top: 16px; max-width: 62ch; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .btn { border: 0; border-radius: 999px; padding: 14px 20px; font-size: .95rem; font-weight: 800; cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+    .btn-primary { background: linear-gradient(135deg, var(--teal), var(--teal-2)); color: #fff; }
+    .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:focus-visible, .btn-premium:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .hero-proof { margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .proof-chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; font-size: .83rem; font-weight: 700; color: var(--muted); text-align: center; }
+    .proof-chip:nth-child(2), .proof-chip:nth-child(4) { border-color: rgba(111,182,255,.45); background: var(--blue-soft); }
+
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 26px; padding: 22px; box-shadow: var(--shadow); }
+    .hero-impact { position: relative; overflow: hidden; padding: 0; border: 1px solid rgba(14,75,87,.14); }
+    .hero-impact::before { content: ""; position: absolute; inset: -25% -10% auto auto; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(111,182,255,.22), transparent 70%); pointer-events: none; }
+    .hero-impact-head { padding: 14px 18px; background: linear-gradient(135deg, rgba(243,231,215,.88), rgba(238,223,200,.86)); border-bottom: 1px solid rgba(216,194,168,.65); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .hero-impact-body { padding: 18px; }
+    .premium-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 800; color: var(--teal); text-transform: uppercase; letter-spacing: .06em; background: rgba(255,255,255,.8); border: 1px solid rgba(216,194,168,.75); border-radius: 999px; padding: 6px 10px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 rgba(111,182,255,.4); animation: pulseLive 2.2s ease-in-out infinite; }
+    .metric-row { margin-top: 14px; display: grid; gap: 12px; }
+    .metric { display: flex; justify-content: space-between; border: 1px solid var(--line); border-radius: 14px; padding: 13px 12px; }
+    .metric span { color: #566369; font-weight: 700; }
+    .metric strong { color: var(--success); font-size: 1.12rem; letter-spacing: -.01em; }
+
+    .split-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 22px; }
+    h2 { font-size: clamp(2.1rem, 4.2vw, 3.2rem); max-width: 17ch; }
+    .split-head .sub { max-width: 46ch; font-size: 1rem; line-height: 1.7; }
+    .signal-line { width: 118px; height: 3px; border-radius: 999px; margin-top: 14px; background: linear-gradient(90deg, rgba(14,75,87,.95), rgba(58,143,160,.7), rgba(111,182,255,.35)); position: relative; }
+    .signal-line::after { content: ""; position: absolute; right: -1px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .tile { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 22px; transition: transform .24s ease, box-shadow .24s ease; }
+    .tile:hover { transform: translateY(-3px); box-shadow: 0 18px 34px rgba(14,75,87,.09); }
+    .tile h3 { font-size: 1.35rem; margin-bottom: 8px; }
+    .tile p { color: var(--muted); }
+    .included-list { margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .included-list div { border: 1px solid var(--line); border-radius: 10px; padding: 9px; background: #fff; font-size: .9rem; color: #435057; }
+    .included-list div:nth-child(odd) { background: linear-gradient(180deg, #fff, #fafdfd); }
+
+    .band { background: linear-gradient(135deg, #0f4f5c 0%, #1f6f7f 100%); color: #fff; border-radius: 28px; padding: 28px; box-shadow: 0 18px 52px rgba(14,75,87,.22); }
+    .band-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .list { display: grid; gap: 10px; margin-top: 16px; }
+    .list-item { border: 1px solid rgba(255,255,255,.2); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.08); }
+    .roi-estimator { background: #fff; border-radius: 18px; color: var(--ink); padding: 18px; }
+    .roi-controls { display: grid; gap: 10px; margin-top: 12px; }
+    .roi-controls label { display: grid; gap: 6px; font-size: .85rem; color: var(--muted); font-weight: 700; }
+    .roi-controls input[type="range"] { width: 100%; accent-color: var(--teal); }
+    .roi-values { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+    .roi-stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #f8fbfc; }
+    .roi-stat span { color: var(--muted); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .roi-stat strong { display: block; font-size: 1.15rem; color: var(--teal); margin-top: 4px; }
+    .roi-total { margin-top: 10px; border-radius: 14px; background: var(--success-soft); border: 1px solid rgba(46,139,87,.2); padding: 14px; text-align: center; }
+    .roi-total b { font-size: 1.85rem; color: var(--success); display: block; line-height: 1; }
+
+    .workflow-card { background: #fff; border: 1px solid var(--line); border-radius: 28px; padding: 24px; box-shadow: var(--shadow); position: relative; }
+    .workflow-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 1px solid rgba(216,194,168,.45); pointer-events: none; }
+    .workflow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .wf-step { background: linear-gradient(180deg, #fff, #f8fbfc); border: 1px solid var(--line); border-radius: 16px; padding: 14px; position: relative; min-height: 172px; }
+    .wf-step:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -10px; transform: translateY(-50%); color: var(--teal); font-weight: 800; }
+    .wf-step b { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: var(--blue-soft); color: var(--teal); margin-bottom: 8px; }
+    .wf-step h3 { font-size: 1.1rem; margin-bottom: 6px; }
+    .wf-step p { color: var(--muted); font-size: .92rem; }
+
+    .case-study { background: linear-gradient(135deg, #163841 0%, #1b5663 100%); color: #fff; border-radius: 28px; padding: 28px; box-shadow: var(--shadow); }
+    .case-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; align-items: center; }
+    .case-kpi { display: grid; gap: 8px; }
+    .case-metric { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; }
+    .case-metric span { color: rgba(255,255,255,.75); }
+    .case-metric strong { font-size: 1.2rem; }
+
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .price-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 18px; box-shadow: var(--shadow); }
+    .price-card.featured { border: 2px solid var(--champagne-3); background: linear-gradient(180deg, #fff, var(--champagne)); transform: translateY(-4px); }
+    .price-tier { color: var(--teal); font-size: .85rem; text-transform: uppercase; font-weight: 800; letter-spacing: .08em; }
+    .price-amount { margin-top: 6px; font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; }
+    .price-sub { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+    .price-list { margin-top: 10px; display: grid; gap: 7px; color: #425057; font-size: .92rem; }
+    .price-note { margin-top: 16px; color: var(--muted); font-size: .9rem; }
+    .proof-disclaimer { margin-top: 8px; color: rgba(255,255,255,.82); font-size: .82rem; }
+
+    .product-ui { margin-top: 18px; border: 1px solid var(--line); border-radius: 24px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+    .ui-topbar { background: linear-gradient(135deg, #0f4f5c, #1f6f7f); color: #fff; padding: 12px 14px; font-size: .9rem; font-weight: 700; display: flex; justify-content: space-between; }
+    .ui-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 10px; padding: 12px; background: #f8fcfd; }
+    .ui-panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+    .ui-panel h4 { margin: 0 0 8px; font-size: .95rem; color: var(--ink); }
+    .ui-log { display: grid; gap: 6px; }
+    .ui-item { border: 1px solid var(--line); border-radius: 10px; padding: 8px; font-size: .84rem; color: #425057; display: flex; justify-content: space-between; gap: 8px; }
+    .ui-pill { font-size: .7rem; border-radius: 999px; padding: 4px 8px; background: var(--blue-soft); color: var(--teal); font-weight: 800; white-space: nowrap; border: 1px solid rgba(111,182,255,.45); }
+    .ui-pill.confirmed, .ui-pill.handled { background: var(--success-soft); color: var(--success); }
+    .ui-pill.ai { background: var(--blue-soft); color: #2463a8; }
+    .ui-kpi { display: grid; gap: 8px; }
+    .ui-kpi .ui-item strong { color: var(--teal); }
+
+    .cta-premium { border-radius: 30px; padding: 28px; background: linear-gradient(145deg, #1f2e37, #2f4652); color: #fff; box-shadow: 0 26px 70px rgba(12, 30, 38, .28); border: 1px solid rgba(216,194,168,.28); }
+    .cta-grid { display: grid; grid-template-columns: 1fr .95fr; gap: 16px; align-items: start; }
+    .cta-points { display: grid; gap: 10px; margin-top: 14px; }
+    .cta-point { border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px; background: rgba(243,231,215,.12); }
+    .form-card { background: rgba(255,255,255,.96); color: var(--ink); border-radius: 18px; padding: 16px; border: 1px solid rgba(255,255,255,.4); }
+    .btn-premium { width: 100%; background: linear-gradient(135deg, var(--teal), var(--teal-2)); color: #fff; border: 0; border-radius: 12px; padding: 12px; font-weight: 800; cursor: pointer; }
+    .form-success { display: none; margin-top: 10px; background: var(--success-soft); border: 1px solid rgba(46,139,87,.35); color: #065f46; border-radius: 10px; padding: 10px; font-size: .9rem; font-weight: 700; }
+    .form-success.show { display: block; }
+
+    .mobile-sticky-cta { display: none; }
+    .premium-divider { width: 84px; height: 2px; border-radius: 999px; margin: 14px 0 0; background: linear-gradient(90deg, var(--champagne-3), transparent); }
+
+    .compare { border-collapse: collapse; width: 100%; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .compare th, .compare td { border-bottom: 1px solid var(--line); padding: 12px; text-align: left; }
+    .compare th { background: #f7fbfc; }
+    .compare tbody tr:hover { background: #fcf7f0; }
+
+    .faq { display: grid; gap: 10px; }
+    details { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+    details[open] { border-color: rgba(111,182,255,.45); box-shadow: inset 0 0 0 1px rgba(111,182,255,.2); }
+    summary { font-weight: 800; cursor: pointer; }
+    details p { margin-top: 8px; color: var(--muted); }
+
+    form { display: grid; gap: 10px; }
+    label { font-size: .85rem; color: var(--muted); font-weight: 700; }
+    input, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px; font: inherit; }
+
+    footer { padding: 28px 0 56px; color: var(--muted); font-size: .92rem; }
+
+    @keyframes pulseLive {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(111,182,255,.45); }
+      50% { box-shadow: 0 0 0 8px rgba(111,182,255,0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .live-dot { animation: none; }
+      .hero-impact, .tile, .btn { transition: none; }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid, .band-grid, .grid-3, .workflow, .case-grid, .cta-grid, .pricing-grid, .included-list, .ui-grid { grid-template-columns: 1fr; }
+      .split-head { align-items: start; flex-direction: column; }
+      .wf-step:not(:last-child)::after { display: none; }
+      .mobile-nav-toggle { display: inline-block; }
+      .nav { align-items: center; min-height: 68px; }
+      .nav-links { display: none; width: 100%; flex-direction: column; gap: 8px; padding: 10px 0 12px; }
+      .nav-links a { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+      .nav-links.open { display: flex; }
+      .nav-wrap .container { padding-top: 8px; padding-bottom: 8px; }
+      .brand-status { display: none; }
+      .mobile-sticky-cta { position: fixed; left: 12px; right: 12px; bottom: 10px; z-index: 60; display: block; background: linear-gradient(135deg, #0f4f5c, #1f6f7f); color: #fff; border-radius: 999px; box-shadow: 0 14px 34px rgba(14,75,87,.35); padding: 12px 16px; text-align: center; font-weight: 800; }
+      body { padding-bottom: 68px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav-wrap">
+    <div class="container nav">
+      <a href="#top" class="brand" aria-label="HelloHealthAI home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-3v3a1 1 0 1 1-2 0v-3H8a1 1 0 1 1 0-2h3V7a1 1 0 0 1 1-1z"/></svg>
+        </span>
+        <span class="brand-wordmark">HelloHealth<span class="brand-ai">AI</span></span>
+        <svg class="brand-sparkle" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="currentColor" d="M10 1.8c.4 0 .75.28.84.67l.9 3.72c.06.24.24.43.49.49l3.72.9a.87.87 0 0 1 0 1.68l-3.72.9a.72.72 0 0 0-.49.49l-.9 3.72a.87.87 0 0 1-1.68 0l-.9-3.72a.72.72 0 0 0-.49-.49l-3.72-.9a.87.87 0 0 1 0-1.68l3.72-.9a.72.72 0 0 0 .49-.49l.9-3.72A.87.87 0 0 1 10 1.8Z"/>
+        </svg>
+        <span class="brand-status">AI Ops Live</span>
+      </a>
+      <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Toggle navigation">Menu</button>
+      <nav class="nav-links">
+        <a href="#trust">Trust</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#roi">ROI</a>
+        <a href="#compare">Compare</a>
+        <a href="#faq">FAQ</a>
+        <a href="#demo">Book demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">AI receptionist for dental, med spas, and specialty clinics</div>
+          <h1>Capture missed calls, book more patients, and reduce no-shows automatically.</h1>
+          <p class="sub">We install an AI patient communication system for your practice in 7 days. HelloHealthAI answers calls and texts 24/7, books and reschedules appointments, and hands off complex cases to your team with full context.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary" href="#demo">Book a 15-minute revenue leak audit</a>
+            <a class="btn btn-secondary" href="#roi">See your ROI estimate</a>
+          </div>
+          <div class="hero-proof">
+            <div class="proof-chip">Built for healthcare workflows</div>
+            <div class="proof-chip">HIPAA-ready communication controls</div>
+            <div class="proof-chip">24/7 call + text handling</div>
+            <div class="proof-chip">Human escalation when needed</div>
+          </div>
+        </div>
+
+        <aside class="card">
+          <div class="hero-impact">
+            <div class="hero-impact-head">
+              <div>
+                <h3 style="font-family: 'Open Sans',sans-serif; font-size:1.05rem;">Modeled outcomes snapshot</h3>
+                <small style="color:#556167; font-weight:700;">Modeled practice outcome</small>
+              </div>
+              <span class="premium-chip"><span class="live-dot"></span>AI signal</span>
+            </div>
+            <div class="hero-impact-body">
+              <div class="metric-row">
+                <div class="metric"><span>After-hours bookings captured</span><strong>+14/mo</strong></div>
+                <div class="metric"><span>No-show rate trend</span><strong>22% → 11%</strong></div>
+                <div class="metric"><span>Front-desk time freed</span><strong>2+ hrs/day</strong></div>
+                <div class="metric"><span>Avg response time</span><strong>&lt; 15 sec</strong></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="trust">
+      <div class="container">
+        <div class="split-head">
+          <div>
+            <div class="eyebrow">Healthcare trust layer</div>
+            <h2>Built to be safe, practical, and easy for your staff to run daily.</h2>
+            <div class="signal-line" aria-hidden="true"></div>
+          </div>
+          <p class="sub">Healthcare buyers need more than nice design. They need secure communication, clear escalation rules, and confidence that workflows will not break on busy days.</p>
+        </div>
+        <div class="grid-3">
+          <article class="tile"><h3>Secure patient communication</h3><p>Encrypted data handling, role-based operational access, and configurable retention policies for patient messages.</p></article>
+          <article class="tile"><h3>HIPAA-ready controls</h3><p>Policy-aligned workflows and auditable communication trails help teams support compliance requirements.</p></article>
+          <article class="tile"><h3>Human handoff</h3><p>Complex cases escalate to staff instantly with summaries, context, and next-action prompts.</p></article>
+        </div>
+        <div class="included-list">
+          <div>AI phone answering for common questions</div>
+          <div>Missed-call text back automation</div>
+          <div>Appointment request capture</div>
+          <div>FAQ chatbot and SMS assistant</div>
+          <div>Reminder and confirmation flows</div>
+          <div>Reschedule workflow support</div>
+          <div>Lead routing to staff</div>
+          <div>Dashboard reporting + summaries</div>
+          <div>Call transcripts + follow-up context</div>
+          <div>Office-hours / after-hours routing</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="pricing">
+      <div class="container">
+        <div class="split-head">
+          <div>
+            <div class="eyebrow">Phase 1 offer</div>
+            <h2>Service-led AI receptionist install with clear package pricing.</h2>
+            <div class="premium-divider"></div>
+          </div>
+          <p class="sub">Choose a package based on automation depth and integrations. Every package is built around practical front-desk relief and revenue capture.</p>
+        </div>
+        <div class="pricing-grid">
+          <article class="price-card">
+            <div class="price-tier">Starter</div>
+            <div class="price-amount">$1,000 setup + $497/mo</div>
+            <div class="price-sub">Best for single-site practices starting automation.</div>
+            <div class="price-list">
+              <div>• Missed-call text back</div>
+              <div>• FAQ chatbot / SMS assistant</div>
+              <div>• Basic lead capture</div>
+              <div>• Office-hours automation</div>
+            </div>
+          </article>
+          <article class="price-card featured">
+            <div class="price-tier">Growth</div>
+            <div class="price-amount">$2,500 setup + $997/mo</div>
+            <div class="price-sub">Recommended for practices ready for AI voice + scheduling flows.</div>
+            <div class="price-list">
+              <div>• Everything in Starter</div>
+              <div>• AI voice receptionist</div>
+              <div>• Appointment request flow</div>
+              <div>• Reminder / confirmation flows</div>
+              <div>• Basic analytics</div>
+              <div>• 1 integration</div>
+            </div>
+          </article>
+          <article class="price-card">
+            <div class="price-tier">Pro</div>
+            <div class="price-amount">$5,000 setup + $1,500–$2,500/mo</div>
+            <div class="price-sub">For multi-location, high-volume, and custom workflow operations.</div>
+            <div class="price-list">
+              <div>• Everything in Growth</div>
+              <div>• Custom workflows</div>
+              <div>• Multi-location / multi-provider support</div>
+              <div>• Call scoring + reporting</div>
+              <div>• Priority support</div>
+              <div>• Advanced integration</div>
+            </div>
+          </article>
+        </div>
+        <p class="price-note">Pricing is intentionally transparent for Phase 1 so healthcare operators can evaluate ROI quickly without waiting on a custom quote cycle.</p>
+      </div>
+    </section>
+
+    <section class="section" id="roi">
+      <div class="container band">
+        <div class="band-grid">
+          <div>
+            <div class="eyebrow" style="background:rgba(255,255,255,.14);color:#fff;">ROI focus</div>
+            <h2 style="margin-top: 12px; max-width: 14ch;">See how many appointments your practice is losing today.</h2>
+            <div class="list">
+              <div class="list-item"><strong>Patients can</strong><br />Book, reschedule, confirm, and ask common questions 24/7.</div>
+              <div class="list-item"><strong>Staff can</strong><br />Review updates, escalations, and summaries in one clean queue.</div>
+              <div class="list-item"><strong>Owners can</strong><br />Track bookings recovered, no-show reduction, and admin time saved.</div>
+            </div>
+          </div>
+          <div class="roi-estimator">
+            <h3 style="font-family:'Open Sans',sans-serif; font-size:1rem;">Interactive ROI estimator</h3>
+            <div class="roi-controls">
+              <label>Monthly appointments
+                <input id="appointments" type="range" min="60" max="600" step="10" value="200">
+              </label>
+              <label>No-show rate (%)
+                <input id="noShowRate" type="range" min="5" max="35" step="1" value="18">
+              </label>
+              <label>Average visit value ($)
+                <input id="visitValue" type="range" min="80" max="450" step="5" value="180">
+              </label>
+              <label>Reduction with HelloHealthAI (%)
+                <input id="reductionRate" type="range" min="10" max="70" step="1" value="35">
+              </label>
+            </div>
+            <div class="roi-values">
+              <div class="roi-stat"><span>Appointments/month</span><strong id="appointmentsVal">200</strong></div>
+              <div class="roi-stat"><span>No-show rate</span><strong id="noShowVal">18%</strong></div>
+              <div class="roi-stat"><span>Avg visit value</span><strong id="visitVal">$180</strong></div>
+              <div class="roi-stat"><span>Reduction target</span><strong id="reductionVal">35%</strong></div>
+            </div>
+            <div class="roi-total">
+              <span>Estimated monthly revenue recovered</span>
+              <b id="recoveredTotal">$2,268</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="container">
+        <div class="split-head">
+          <div>
+            <div class="eyebrow">Product workflow visual</div>
+            <h2>From missed call to confirmed visit in one automated flow.</h2>
+            <div class="signal-line" aria-hidden="true"></div>
+          </div>
+          <p class="sub">A single workflow that patients feel as fast service and staff experience as clean operational updates.</p>
+        </div>
+        <div class="workflow-card">
+          <div class="workflow">
+            <article class="wf-step">
+              <b>1</b>
+              <h3>Inbound call or text</h3>
+              <p>HelloHealthAI answers in seconds and verifies intent (book, reschedule, question, confirmation).</p>
+            </article>
+            <article class="wf-step">
+              <b>2</b>
+              <h3>Smart scheduling logic</h3>
+              <p>Checks your appointment rules, provider availability, and visit type constraints.</p>
+            </article>
+            <article class="wf-step">
+              <b>3</b>
+              <h3>Patient confirmation</h3>
+              <p>Patient receives instant confirmation and reminder sequence with self-serve update options.</p>
+            </article>
+            <article class="wf-step">
+              <b>4</b>
+              <h3>Staff handoff dashboard</h3>
+              <p>Team sees summaries, escalations, and schedule changes without digging through threads.</p>
+            </article>
+          </div>
+          <div class="product-ui" aria-label="Sample product dashboard visual">
+            <div class="ui-topbar">
+              <span>HelloHealthAI Operations Dashboard</span>
+              <span>Live · Sample UI</span>
+            </div>
+            <div class="ui-grid">
+              <div class="ui-panel">
+                <h4>Patient Flow · Conversation Summary</h4>
+                <div class="ui-log">
+                  <div class="ui-item"><span>After-hours missed call → SMS recovery sent</span><span class="ui-pill ai">AI automated</span></div>
+                  <div class="ui-item"><span>Patient requested reschedule for Tue 2:30 PM</span><span class="ui-pill handled">Schedule recovered</span></div>
+                  <div class="ui-item"><span>Reminder sent for tomorrow 11:00 AM</span><span class="ui-pill confirmed">Confirmed</span></div>
+                  <div class="ui-item"><span>Insurance question escalated to staff</span><span class="ui-pill ai">AI triaged</span></div>
+                </div>
+              </div>
+              <div class="ui-panel">
+                <h4>Front Desk Queue · Daily KPIs</h4>
+                <div class="ui-kpi">
+                  <div class="ui-item"><span>After-hours capture</span><strong>18</strong></div>
+                  <div class="ui-item"><span>AI triage completions</span><strong>42</strong></div>
+                  <div class="ui-item"><span>Risk alerts</span><strong>7</strong></div>
+                  <div class="ui-item"><span>Human handoffs</span><strong>5</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="proof">
+      <div class="container case-study">
+        <div class="case-grid">
+          <div>
+            <div class="eyebrow" style="background: rgba(255,255,255,.14); color: #fff;">Case study snapshot</div>
+            <h2 style="margin-top:12px; max-width: 18ch;">Modeled sample scenario: dental clinic ROI in 45 days.</h2>
+            <p style="margin-top: 10px; color: rgba(255,255,255,.84);">This modeled scenario represents typical improvements from missed-call recovery and reminder automation in a busy clinic environment.</p>
+            <p style="margin-top:10px; font-weight:700;">“The schedule stopped leaking after-hours opportunities once follow-up became instant.” — Sample operator narrative</p>
+            <p class="proof-disclaimer">All figures shown in this block are sample modeled outcomes for planning, not a published customer claim.</p>
+          </div>
+          <div class="case-kpi">
+            <div class="case-metric"><span>No-show rate</span><strong>19% → 10%</strong></div>
+            <div class="case-metric"><span>After-hours bookings</span><strong>+31/mo</strong></div>
+            <div class="case-metric"><span>Front-desk time saved</span><strong>2.6 hrs/day</strong></div>
+            <div class="case-metric"><span>Estimated revenue recovered</span><strong>$8.2k/mo</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="compare">
+      <div class="container">
+        <div class="split-head">
+          <div>
+            <div class="eyebrow">Decision support</div>
+            <h2>HelloHealthAI vs hiring another front-desk staff member</h2>
+          </div>
+        </div>
+        <table class="compare">
+          <thead><tr><th>Capability</th><th>HelloHealthAI</th><th>Additional hire</th></tr></thead>
+          <tbody>
+            <tr><td>24/7 coverage</td><td>Yes</td><td>No</td></tr>
+            <tr><td>After-hours response</td><td>Instant</td><td>Limited</td></tr>
+            <tr><td>Handles repetitive scheduling</td><td>Automatically</td><td>Manual</td></tr>
+            <tr><td>Escalates edge cases to humans</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>Scales during call spikes</td><td>Yes</td><td>Not easily</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="split-head">
+          <div>
+            <div class="eyebrow">FAQ</div>
+            <h2>Answers to common buyer questions</h2>
+          </div>
+        </div>
+        <div class="faq">
+          <details><summary>Does this replace my receptionist?</summary><p>No. It removes repetitive call and text load so staff can focus on in-office patient experience.</p></details>
+          <details><summary>Can conversations be handed off to my team?</summary><p>Yes. Escalations include conversation summaries and recommended next actions.</p></details>
+          <details><summary>Can it reduce no-shows?</summary><p>Yes. Automated confirmation and reminder flows make rescheduling easy before a slot is lost.</p></details>
+          <details><summary>How long does setup take?</summary><p>Most practices can configure core workflows quickly, then optimize with real usage data.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="demo">
+      <div class="container">
+        <div class="cta-premium">
+          <div class="cta-grid">
+            <div>
+              <div class="eyebrow" style="background: rgba(255,255,255,.14); color:#fff;">Book demo</div>
+              <h2 style="margin-top: 12px; max-width: 14ch;">Get a 15-minute revenue leak audit built for your practice.</h2>
+              <p style="color: rgba(255,255,255,.82); margin-top: 10px;">We map your missed-call pattern, estimate no-show recoverability, and show exactly how the workflow fits your current team.</p>
+              <div class="cta-points">
+                <div class="cta-point">Includes custom missed-revenue estimate and staffing impact model.</div>
+                <div class="cta-point">Shows your workflow with escalation points before go-live.</div>
+                <div class="cta-point">No disruptive migration required for existing front-desk operations.</div>
+              </div>
+            </div>
+            <div class="form-card">
+              <form>
+                <div><label for="name">Full name</label><input id="name" type="text" placeholder="Dr. Jane Smith"></div>
+                <div><label for="type">Practice type</label><select id="type"><option>Dental</option><option>Med spa / aesthetics</option><option>Clinic / specialty center</option></select></div>
+                <div><label for="volume">Monthly appointments</label><input id="volume" type="number" placeholder="200"></div>
+                <div><label for="email">Work email</label><input id="email" type="email" placeholder="you@practice.com"></div>
+                <div><label for="timeline">Implementation timeline</label><select id="timeline"><option>Within 30 days</option><option>30–90 days</option><option>Exploring this quarter</option></select></div>
+                <button class="btn-premium" id="demoSubmit" type="button">See your missed-revenue estimate</button>
+                <div class="form-success" id="formSuccess">Thanks — we received your request. A specialist will reach out within 1 business day with your modeled revenue estimate.</div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">© 2026 HelloHealthAI · Built for healthcare practices that want fewer no-shows and more booked visits.</div>
+  </footer>
+  <a class="mobile-sticky-cta" href="#demo">Book 15-min revenue audit</a>
+  <script>
+    const mobileNavToggle = document.getElementById('mobileNavToggle');
+    const navLinks = document.querySelector('.nav-links');
+    mobileNavToggle?.addEventListener('click', () => {
+      navLinks?.classList.toggle('open');
+    });
+
+    const heroImpact = document.querySelector('.hero-impact');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (heroImpact && !reduceMotion) {
+      heroImpact.style.transition = 'transform .28s ease';
+      heroImpact.addEventListener('mousemove', (event) => {
+        const rect = heroImpact.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        heroImpact.style.transform = `perspective(900px) rotateX(${(-y * 2).toFixed(2)}deg) rotateY(${(x * 2).toFixed(2)}deg)`;
+      });
+      heroImpact.addEventListener('mouseleave', () => {
+        heroImpact.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg)';
+      });
+    }
+
+    const appointments = document.getElementById('appointments');
+    const noShowRate = document.getElementById('noShowRate');
+    const visitValue = document.getElementById('visitValue');
+    const reductionRate = document.getElementById('reductionRate');
+
+    const appointmentsVal = document.getElementById('appointmentsVal');
+    const noShowVal = document.getElementById('noShowVal');
+    const visitVal = document.getElementById('visitVal');
+    const reductionVal = document.getElementById('reductionVal');
+    const recoveredTotal = document.getElementById('recoveredTotal');
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+    }
+
+    function updateROI() {
+      const appt = Number(appointments.value);
+      const noShow = Number(noShowRate.value) / 100;
+      const avgVisit = Number(visitValue.value);
+      const reduction = Number(reductionRate.value) / 100;
+
+      const monthlyLeak = appt * noShow * avgVisit;
+      const recovered = monthlyLeak * reduction;
+
+      appointmentsVal.textContent = String(appt);
+      noShowVal.textContent = `${noShowRate.value}%`;
+      visitVal.textContent = formatCurrency(avgVisit);
+      reductionVal.textContent = `${reductionRate.value}%`;
+      recoveredTotal.textContent = formatCurrency(recovered);
+    }
+
+    [appointments, noShowRate, visitValue, reductionRate].forEach((input) => {
+      input.addEventListener('input', updateROI);
+    });
+    updateROI();
+
+    const demoSubmit = document.getElementById('demoSubmit');
+    const formSuccess = document.getElementById('formSuccess');
+    demoSubmit?.addEventListener('click', () => {
+      formSuccess?.classList.add('show');
+      demoSubmit.textContent = 'Request received';
+      demoSubmit.setAttribute('disabled', 'true');
+      demoSubmit.style.opacity = '.75';
+    });
+  </script>
+</body>
+</html>
